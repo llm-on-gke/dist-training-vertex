@@ -24,7 +24,7 @@ spec:
             restartPolicy: Never
             #imagePullSecrets:
             # - name: test-coreweave-ecr
-            #serviceAccountName: gcs-fuse-sa
+            serviceAccountName: storage-access
             nodeSelector:
              cloud.google.com/gke-accelerator: nvidia-h100-80gb
             hostNetwork: true
