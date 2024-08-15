@@ -81,7 +81,7 @@ spec:
               # Force python to not buffer output and write directly to stdout, so we can view training logs via `kubectl logs`.
               - name: NNODES
                 value: "2"
-              - name: NODE_RANK
+              - name: RANK
                 valueFrom:
                   fieldRef:
                     fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
