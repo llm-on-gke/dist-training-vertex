@@ -1,0 +1,181 @@
+# Distributed training of a traditional CNN model to do image classification 
+# using the MNIST dataset and PyTorch.
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: pytorch-training
+spec:
+  replicatedJobs:
+  - name: workers
+    template:
+      spec:
+        parallelism: 2 #number of nodes
+        completions: 2
+        backoffLimit: 0
+        template:
+          metadata:
+              labels:
+                app: pytorch-training
+              annotations:
+                gke-gcsfuse/volumes: "true"
+                gke-gcsfuse/memory-limit: "20Gi"
+                gke-gcsfuse/memory-request: "5Gi"
+          spec:
+            restartPolicy: Never
+            imagePullSecrets:
+             - name: test-coreweave-ecr
+            #serviceAccountName: gcs-fuse-sa
+            nodeSelector:
+             cloud.google.com/gke-accelerator: nvidia-h100-80gb
+            hostNetwork: true
+            dnsPolicy: ClusterFirstWithHostNet
+            containers:
+            - name: tcpx-daemon 
+              image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/tcpgpudmarxd-dev:v2.0.11
+              imagePullPolicy: Always
+              command:
+                - /tcpgpudmarxd/build/app/tcpgpudmarxd
+                - --gpu_nic_preset
+                - a3vm
+                - --gpu_shmem_type
+                - fd
+                - --uds_path
+                - /run/tcpx
+                - --setup_param
+                - \"--verbose 128 2 0 \"
+              securityContext:
+                privileged: true
+              volumeMounts:
+               - name: libraries
+                 mountPath: /usr/local/nvidia/lib64
+                 readOnly: true
+               - name: tcpx-socket
+                 mountPath: /run/tcpx
+               - name: sys
+                 mountPath: /hostsysfs
+               - name: proc-sys
+                 mountPath: /hostprocsysfs
+              env:
+               - name: LD_LIBRARY_PATH
+                 value: /usr/local/nvidia/lib64
+            - name: pytorch
+              image: us-east1-docker.pkg.dev/northam-ce-mlai-tpu/gke-llm/sd-pix2pix_train:latest
+              ports:
+              - containerPort: 3389
+              securityContext:
+                capabilities:
+                  add:
+                   - SYS_ADMIN
+                   - SYS_PTRACE
+                   - IPC_LOCK
+                privileged: true
+              env:
+              - name: MASTER_ADDR
+                value: "pytorch-training-workers-0-0.pytorch-training"
+              - name: MASTER_PORT
+                value: "3389"
+              - name: LOCAL_RANK
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+              # Force python to not buffer output and write directly to stdout, so we can view training logs via `kubectl logs`.
+              - name: NNODES
+                value: "2"
+              - name: NODE_RANK
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+              - name: PYTHONUNBUFFERED
+                value: "0"
+              - name: OMP_NUM_THREADS
+                value: "1"
+              - name: LD_LIBRARY_PATH
+                value: /usr/local/nvidia/lib64
+              - name: NCCL_ALGO
+                value: Ring
+              - name: NCCL_CROSS_NIC
+                value: "0"
+              - name: NCCL_DYNAMIC_CHUNK_SIZE
+                value: "524288"
+              - name: NCCL_GPUDIRECTTCPX_CTRL_DEV
+                value: eth0
+              - name: NCCL_GPUDIRECTTCPX_FORCE_ACK
+                value: "0"
+              - name: NCCL_GPUDIRECTTCPX_PROGRAM_FLOW_STEERING_WAIT_MICROS
+                value: "1000000"
+              - name: NCCL_GPUDIRECTTCPX_RX_BINDINGS
+                value: eth1:22-35,126-139;eth2:22-35,126-139;eth3:74-87,178-191;eth4:74-87,178-191
+              - name: NCCL_GPUDIRECTTCPX_SOCKET_IFNAME
+                value: eth1,eth2,eth3,eth4
+              - name: NCCL_GPUDIRECTTCPX_TX_BINDINGS
+                value: eth1:8-21,112-125;eth2:8-21,112-125;eth3:60-73,164-177;eth4:60-73,164-177
+              - name: NCCL_MAX_NCHANNELS
+                value: "12"
+              - name: NCCL_MIN_NCHANNELS
+                value: "12"
+              - name: NCCL_NET_GDR_LEVEL
+                value: PIX
+              - name: NCCL_NSOCKS_PERTHREAD
+                value: "4"
+              - name: NCCL_P2P_NET_CHUNKSIZE
+                value: "524288"
+              - name: NCCL_P2P_NVL_CHUNKSIZE
+                value: "1.048576e+06"
+              - name: NCCL_P2P_PCI_CHUNKSIZE
+                value: "524288"
+              - name: NCCL_P2P_PXN_LEVEL
+                value: "0"
+              - name: NCCL_PROTO
+                value: Simple
+              - name: NCCL_SOCKET_IFNAME
+                value: eth0
+              - name: NCCL_SOCKET_NTHREADS
+                value: "1"
+              resources:
+                requests:
+                 memory: "1200Gi"
+                 nvidia.com/gpu: "8"
+                limits:
+                 memory: "1800Gi"
+                 nvidia.com/gpu: "8"
+              volumeMounts:
+               - name: tcpx-socket
+                 mountPath: /tmp
+               - name: libraries
+                 mountPath: /usr/local/nvidia/lib64
+                 readOnly: true
+               - name: gcs-fuse-csi-vol
+                 mountPath: /mnt/cornetto-storage
+                 readOnly: false
+               - name: gcs-fuse-csi-vol
+                 mountPath: /usr/local/home/garnish
+                 subPath: garnish
+               - mountPath: /dev/shm
+                 name: dshm
+               #- name: tmp-data
+               #  mountPath: /tmp
+            volumes:     
+            - name: tmp-data
+              emptyDir: {}
+            - name: gcs-fuse-csi-vol
+              csi:
+                driver: gcsfuse.csi.storage.gke.io
+                readOnly: false
+                volumeAttributes:
+                  bucketName: dlexamples-shared-data
+                  mountOptions: "implicit-dirs,file-mode=777,ignore-interrupts"
+              #gcsfuseLoggingSeverity: "trace"
+            - name: dshm
+              emptyDir:
+                medium: Memory
+            - name: libraries
+              hostPath:
+               path: /home/kubernetes/bin/nvidia/lib64
+            - name: tcpx-socket
+              emptyDir: {}
+            - name: sys
+              hostPath:
+               path: /sys
+            - name: proc-sys
+              hostPath:
+                path: /proc/sys
