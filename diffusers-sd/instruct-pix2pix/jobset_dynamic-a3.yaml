@@ -131,6 +131,10 @@ spec:
                 value: eth0
               - name: NCCL_SOCKET_NTHREADS
                 value: "1"
+              
+              command: ["/bin/bash", "-c"]
+              args: ["sd-pix2pix-tutorial-2node.sh"]
+
               resources:
                 requests:
                  memory: "1200Gi"
@@ -151,6 +155,8 @@ spec:
                  name: dshm
                #- name: tmp-data
                #  mountPath: /tmp
+                        
+              
             volumes:     
             - name: tmp-data
               emptyDir: {}
