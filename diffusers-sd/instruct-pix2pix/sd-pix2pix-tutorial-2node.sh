@@ -23,7 +23,7 @@ echo JOB_COMPLETION_INDEX: $JOB_COMPLETION_INDEX
 date +"%Y%m%d_%H"
 RUNDATE=$(date +"%Y%m%d%H")
 export CLOUD_ML_JOB_ID="${CLOUD_ML_JOB_ID:=RUNDATE}" 
-export JOB_IDENTIFIER=sd-pix2pix-1node-$CLOUD_ML_JOB_ID
+export JOB_IDENTIFIER=sd-pix2pix-1node-$RUNDATE
 
 # update config for # of nodes
 #/opt/conda/bin/accelerate config update --config_file ./trainer/accelerate-files/2host_config.yaml
