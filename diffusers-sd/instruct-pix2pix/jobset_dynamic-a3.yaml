@@ -133,7 +133,7 @@ spec:
                 value: "1"
               
               command: ["/bin/bash", "-c"]
-              args: ["sd-pix2pix-tutorial-2node.sh"]
+              args: ["/root/sd-pix2pix-tutorial-2node.sh"]
 
               resources:
                 requests:
