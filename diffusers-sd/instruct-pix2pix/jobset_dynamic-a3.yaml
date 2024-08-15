@@ -22,9 +22,9 @@ spec:
                 gke-gcsfuse/memory-request: "5Gi"
           spec:
             restartPolicy: Never
-            imagePullSecrets:
-             - name: test-coreweave-ecr
-            serviceAccountName: aiinfra-gke-sa
+            #imagePullSecrets:
+            # - name: test-coreweave-ecr
+            #serviceAccountName: gcs-fuse-sa
             nodeSelector:
              cloud.google.com/gke-accelerator: nvidia-h100-80gb
             hostNetwork: true
@@ -145,8 +145,11 @@ spec:
                  mountPath: /usr/local/nvidia/lib64
                  readOnly: true
                - name: gcs-fuse-csi-vol
-                 mountPath: /gcs
+                 mountPath: /mnt/cornetto-storage
                  readOnly: false
+               - name: gcs-fuse-csi-vol
+                 mountPath: /usr/local/home/garnish
+                 subPath: garnish
                - mountPath: /dev/shm
                  name: dshm
                #- name: tmp-data
@@ -159,10 +162,9 @@ spec:
                 driver: gcsfuse.csi.storage.gke.io
                 readOnly: false
                 volumeAttributes:
-                   bucketName: rick-llama-factory
-                   mountOptions: "implicit-dirs"
-                   gcsfuseLoggingSeverity: warning
-                   fileCacheCapacity: "200Gi"           #gcsfuseLoggingSeverity: "trace"
+                  bucketName: rick-llama-factory
+                  mountOptions: "implicit-dirs,file-mode=777,ignore-interrupts"
+              #gcsfuseLoggingSeverity: "trace"
             - name: dshm
               emptyDir:
                 medium: Memory
