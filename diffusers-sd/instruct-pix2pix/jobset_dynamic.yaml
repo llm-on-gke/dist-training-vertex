@@ -23,13 +23,19 @@ spec:
                cloud.google.com/gke-accelerator: nvidia-h100-mega-80gb
             #serviceAccountName: training
             volumes:
+ 
             - name: libraries
               hostPath:
                 path: /home/kubernetes/bin/nvidia/lib64
-
-            - name: nvidia-install-dir-host
+            - name: sys
               hostPath:
-                path: /home/kubernetes/bin/nvidia
+                path: /sys
+            - name: proc-sys
+              hostPath:
+               path: /proc/sys
+            - name: aperture-devices
+              hostPath:
+               path: /dev/aperture_devices
 
             - name: dshm
               emptyDir:
@@ -37,7 +43,7 @@ spec:
 
             containers:
             - name: tcpxo-daemon
-              image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev:v1.0.9
+              image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev:v1.0.10
               imagePullPolicy: Always
               command: ["/bin/sh", "-c"]
               args:
@@ -50,12 +56,16 @@ spec:
               volumeMounts:
                 - name: nvidia-install-dir-host
                   mountPath: /usr/local/nvidia
+                - name: sys
+                  mountPath: /hostsysfs
+                - name: proc-sys
+                  mountPath: /hostprocsysfs
               env:
                 - name: LD_LIBRARY_PATH
                   value: /usr/local/nvidia/lib64
 
             - name: pytorch
-              image: us-west4-docker.pkg.dev/production-cluster-424922/docker-images/experiments:<USER>-<DOCKER_TAG>
+              image: us-east1-docker.pkg.dev/northam-ce-mlai-tpu/gke-llm/sd-pix2pix_train:latest
               imagePullPolicy: Always
               # image: gcr.io/k8s-staging-jobset/pytorch-mnist:latest
               ports:
@@ -78,13 +88,18 @@ spec:
                 value: ALL
               - name: LD_LIBRARY_PATH
                 value: /usr/local/nvidia/lib64  
+              - name: NCCL_FASTRAK_LLCM_DEVICE_DIRECTORY
+                value: /dev/aperture_devices
               # - name: TRITON_CACHE_DIR
               #   value: irreverent-datasets/torch-compiler-cache
               securityContext:
                 privileged: true    
               command: ["/bin/bash", "-c"]
               args: ["sd-pix2pix-tutorial-2node.sh"]         
-                                       
+              
+              volumeMounts:
+              - name: aperture-devices
+                mountPath: /dev/aperture_devices                       
               resources:
                 requests:
                   cpu: "8"
