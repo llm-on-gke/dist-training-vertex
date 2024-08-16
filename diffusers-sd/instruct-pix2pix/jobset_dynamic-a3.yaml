@@ -137,6 +137,7 @@ spec:
               - -xc
               - |
                 pip install webdataset
+                pip install bitsandbytes
                 bash /root/sd-c-distill-tutorial-2node.sh
               resources:
                 requests:
