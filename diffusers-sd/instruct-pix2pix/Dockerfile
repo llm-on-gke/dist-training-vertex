@@ -51,6 +51,8 @@ RUN pip install git+https://github.com/huggingface/diffusers
 RUN git clone https://github.com/huggingface/diffusers.git
 RUN pip install -r https://raw.githubusercontent.com/huggingface/diffusers/main/examples/instruct_pix2pix/requirements.txt
 COPY sd-pix2pix-tutorial-2node.sh /root
+COPY sd-c-distill-tutorial-2node.sh /root
 RUN chmod +x /root/sd-pix2pix-tutorial-2node.sh
+RUN chmod +x /root/sd-c-distill-tutorial-2node.sh
 CMD ["/bin/bash"]
 
