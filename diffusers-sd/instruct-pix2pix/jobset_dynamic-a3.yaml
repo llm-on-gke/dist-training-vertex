@@ -85,6 +85,8 @@ spec:
                 valueFrom:
                   fieldRef:
                     fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+              - name: BATCH_SIZE
+                value: 
               - name: PYTHONUNBUFFERED
                 value: "0"
               - name: OMP_NUM_THREADS
@@ -131,11 +133,12 @@ spec:
                 value: eth0
               - name: NCCL_SOCKET_NTHREADS
                 value: "1"
-              
+            
               command:
               - bash
               - -xc
               - |
+                export BATCH_SIZE=96
                 pip install webdataset
                 pip install bitsandbytes
                 bash /root/sd-c-distill-tutorial-2node.sh

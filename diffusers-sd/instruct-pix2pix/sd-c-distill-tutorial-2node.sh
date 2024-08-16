@@ -75,7 +75,7 @@ torchrun --nnodes=2 --node_rank=$RANK \
     --train_shards_path_or_url="pipe:curl -L -s https://huggingface.co/datasets/laion/conceptual-captions-12m-webdataset/resolve/main/data/{00000..01099}.tar?download=true" \
     --validation_steps=200 \
     --checkpointing_steps=200 --checkpoints_total_limit=10 \
-    --train_batch_size=168 \
+    --train_batch_size=$BATCH_SIZE \
     --gradient_checkpointing --enable_xformers_memory_efficient_attention \
     --gradient_accumulation_steps=1 \
     --use_8bit_adam \
