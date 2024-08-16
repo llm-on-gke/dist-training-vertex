@@ -166,7 +166,9 @@ spec:
                 readOnly: false
                 volumeAttributes:
                   bucketName: rick-llama-factory
-                  mountOptions: "implicit-dirs,file-mode=777,ignore-interrupts"
+                  mountOptions: "implicit-dirs"
+                  gcsfuseLoggingSeverity: warning
+                  fileCacheCapacity: "200Gi"
               #gcsfuseLoggingSeverity: "trace"
             - name: dshm
               emptyDir:
