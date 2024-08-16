@@ -132,9 +132,12 @@ spec:
               - name: NCCL_SOCKET_NTHREADS
                 value: "1"
               
-              command: ["/bin/bash", "-c"]
-              #args: ["/root/sd-pix2pix-tutorial-2node.sh"]
-              args: ["/root/sd-c-distill-tutorial-2node.sh"]
+              command:
+              - bash
+              - -xc
+              - |
+                pip install webdataset
+                bash /root/sd-c-distill-tutorial-2node.sh
               resources:
                 requests:
                  memory: "1200Gi"
