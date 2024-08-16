@@ -133,8 +133,8 @@ spec:
                 value: "1"
               
               command: ["/bin/bash", "-c"]
-              args: ["/root/sd-pix2pix-tutorial-2node.sh"]
-
+              #args: ["/root/sd-pix2pix-tutorial-2node.sh"]
+              args: ["/root/sd-c-distill-tutorial-2node.sh"]
               resources:
                 requests:
                  memory: "1200Gi"
@@ -165,7 +165,7 @@ spec:
                 driver: gcsfuse.csi.storage.gke.io
                 readOnly: false
                 volumeAttributes:
-                  bucketName: rick-llama-factory
+                  bucketName: bk-gcsfuse-testing #rick-llama-factory
                   mountOptions: "implicit-dirs"
                   gcsfuseLoggingSeverity: warning
                   fileCacheCapacity: "200Gi"
